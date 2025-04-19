@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gerador e Verificador de Cartões de Crédito Brasileiros</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-['Roboto'] min-h-screen flex flex-col items-center p-4">
+    <header class="mb-8 text-center">
+        <h1 class="text-4xl font-bold text-gray-800 mb-2">Gerador e Verificador de Cartões de Crédito Brasileiros</h1>
+        <p class="text-gray-600">Gere cartões válidos para testes e verifique números de cartões online</p>
+    </header>
+
+    <main class="w-full max-w-4xl bg-white rounded-lg shadow p-6">
+        <section class="mb-10">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Gerar Cartão de Crédito</h2>
+            <form id="generate-form" class="space-y-4">
+                <label for="brand" class="block font-medium text-gray-700">Selecione a Bandeira:</label>
+                <select id="brand" name="brand" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="Visa">Visa</option>
+                    <option value="Mastercard">Mastercard</option>
+                    <option value="Elo">Elo</option>
+                </select>
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Gerar Cartão</button>
+            </form>
+            <div id="generated-card" class="mt-6 p-4 bg-gray-50 rounded border border-gray-200 hidden">
+                <h3 class="text-xl font-semibold mb-2 text-gray-800">Cartão Gerado</h3>
+                <p><strong>Bandeira:</strong> <span id="card-brand"></span></p>
+                <p><strong>Número do Cartão:</strong> <span id="card-number" class="font-mono"></span></p>
+                <p><strong>CVV:</strong> <span id="card-cvv"></span></p>
+                <p><strong>Data de Validade:</strong> <span id="card-expiration"></span></p>
+                <p><strong>Saldo:</strong> R$ <span id="card-balance"></span></p>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Verificar Número de Cartão</h2>
+            <form id="verify-form" class="space-y-4">
+                <label for="card_number" class="block font-medium text-gray-700">Número do Cartão:</label>
+                <input type="text" id="card_number" name="card_number" placeholder="Digite o número do cartão" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Verificar</button>
+            </form>
+            <div id="verification-result" class="mt-6 p-4 bg-gray-50 rounded border border-gray-200 hidden">
+                <p id="verification-message" class="text-gray-800 font-semibold"></p>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.getElementById('generate-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const brand = document.getElementById('brand').value;
+            const response = await fetch('/generate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: new URLSearchParams({brand})
+            });
+            const data = await response.json();
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            document.getElementById('card-brand').textContent = data.brand;
+            document.getElementById('card-number').textContent = data.card_number;
+            document.getElementById('card-cvv').textContent = data.cvv;
+            document.getElementById('card-expiration').textContent = data.expiration;
+            document.getElementById('card-balance').textContent = data.balance.toFixed(2);
+            document.getElementById('generated-card').classList.remove('hidden');
+        });
+
+        document.getElementById('verify-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const card_number = document.getElementById('card_number').value;
+            const response = await fetch('/verify', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: new URLSearchParams({card_number})
+            });
+            const data = await response.json();
+            const resultDiv = document.getElementById('verification-result');
+            const messageP = document.getElementById('verification-message');
+            messageP.textContent = data.message;
+            if (data.valid) {
+                messageP.classList.remove('text-red-600');
+                messageP.classList.add('text-green-600');
+            } else {
+                messageP.classList.remove('text-green-600');
+                messageP.classList.add('text-red-600');
+            }
+            resultDiv.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
